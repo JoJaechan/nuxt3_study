@@ -1,17 +1,9 @@
 const express = require('express')
-const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express()
 const port = 3001;
-
-app.use('/api', createProxyMiddleware({
-    target: 'http://127.0.0.1:3001', // 백엔드 서버 주소
-    changeOrigin: true,
-    pathRewrite: {
-        '^/api': '', // /api로 시작하는 경로를 제거
-    },
-}));
-
+// JSON 본문 파싱을 위한 미들웨어 추가
+app.use(express.json());
 
 require('module-alias/register');
 const commonRouter = require('@routes/common');
