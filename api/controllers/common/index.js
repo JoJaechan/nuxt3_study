@@ -3,35 +3,11 @@ const dotenv = require('dotenv');
 const path = require("path");
 dotenv.config({ path: path.resolve('.env') });
 
-async function fetchData(url) {
-    const { default: fetch } = await import('node-fetch');
-    // Use fetch as normal
-    const response = await fetch(url);
-
-    // console.log("response", response)
-    const data = await response.json();
-    return data;
-}
-
 module.exports.payouts = async function (req, res) {
     try {
         const payoutData = req.body;
 
-        const clientId = process.env.PayPalClientID; // PayPal Client ID
-        const secret =  process.env.PayPalSecret // PayPal Secret
-
-        // PayPal OAuth 토큰을 가져옵니다.
-        const authResponse = await axios.post('https://api.sandbox.paypal.com/v1/oauth2/token', 'grant_type=client_credentials', {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            auth: {
-                username: clientId,
-                password: secret,
-            },
-        });
-
-        const accessToken = authResponse.data.access_token;
+        const accessToken = await getPayPalAccessToken();
 
         const payoutResponse = await axios.post('https://api.sandbox.paypal.com/v1/payments/payouts', payoutData, {
             headers: {
@@ -40,53 +16,121 @@ module.exports.payouts = async function (req, res) {
             },
         });
 
-        // console.log('payoutResponse', payoutResponse.data);
-
         if (!payoutResponse) {
-            throw new Error('Failed to process PayPal Payout');
+            res.status(500).send('Failed to process PayPal Payout');
         }
 
         const batchId = payoutResponse.data.batch_header.payout_batch_id
 
         res.json({batchId});
     } catch (error) {
-        // console.error('Error processing PayPal Payout:', error);
-        res.status(500).send('Error processing PayPal Payout');
+        // AxiosError면 message를 콘솔에러로 찍음
+        if (axios.isAxiosError(error)) {
+            console.error('Error PayPal payouts' + error.message);
+        } else {
+            console.error('Error PayPal payouts');
+        }
+        res.status(500).send('Error processing PayPal Payout : ' + error);
     }
 }
 
 module.exports.batchDetail = async function (req, res) {
     try {
-        const { batchId } = req.body;
-        console.log('[batchDetail] batchId : ', batchId)
+        const { batchId } = req.params;
 
-        const clientId = process.env.PayPalClientID; // PayPal Client ID
-        const secret =  process.env.PayPalSecret // PayPal Secret
+        if (!batchId) {
+            res.status(500).send('Batch ID is required');
+        }
 
-        // PayPal OAuth 토큰을 가져옵니다.
-        const authResponse = await axios.post('https://api.sandbox.paypal.com/v1/oauth2/token', 'grant_type=client_credentials', {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            auth: {
-                username: clientId,
-                password: secret,
-            },
-        });
-
-        const accessToken = authResponse.data.access_token;
-
+        const accessToken = await getPayPalAccessToken();
         // optional : ?page=1&page_size=5&total_required=true
-        const result = await fetch('https://api-m.sandbox.paypal.com/v1/payments/payouts/' + batchId, {
+        const result = await axios.get('https://api-m.sandbox.paypal.com/v1/payments/payouts/' + batchId, {
             headers: {
-                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${accessToken}`,
-            }
+                    'Content-Type': 'application/json',
+            },
         });
 
-        res.json(result);
+        if (!result || !result.data) {
+            res.status(500).send('Failed to process PayPal Payout');
+        }
+
+        res.json(result.data);
     } catch (error) {
-        // console.error('Error processing PayPal Payout:', error);
-        res.status(500).send('Error processing PayPal Payout');
+        console.error('Error PayPal batchDetail');
+        res.status(500).send('Error processing PayPal Payout' + error);
     }
+}
+
+// webhook
+module.exports.webhook = async function (req, res) {
+    try {
+        console.log('Verified Webhook Event:', req.body);
+        const isValid = await verifyWebhookEvent(req);
+        if (!isValid) {
+            return res.status(401).send('Webhook verification failed');
+        }
+
+        const eventType = req.body.event_type;
+        switch (eventType) {
+            case 'PAYMENT.PAYOUTS-ITEM.UNCLAIMED':
+                // Handle unclaimed payout item
+                console.log('Handling unclaimed payout item:', req.body);
+                break;
+            case 'PAYMENT.PAYOUTSBATCH.PROCESSING':
+                // Handle payouts batch processing
+                console.log('Handling payouts batch processing:', req.body);
+                break;
+            case 'PAYMENT.PAYOUTSBATCH.SUCCESS':
+                // Handle successful payouts batch
+                console.log('Handling successful payouts batch:', req.body);
+                break;
+            default:
+                console.log('Received unhandled event type:', eventType);
+        }
+
+        res.send('Webhook received and verified');
+    } catch (error) {
+        console.error('Webhook handling error:');
+        res.status(500).send('Internal Server Error');
+    }
+}
+
+async function getPayPalAccessToken() {
+    const clientId = process.env.PayPalClientID; // PayPal Client ID
+    const secret =  process.env.PayPalSecret // PayPal Secret
+
+    const authResponse = await axios.post('https://api.sandbox.paypal.com/v1/oauth2/token', 'grant_type=client_credentials', {
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        auth: {
+            username: clientId,
+            password: secret,
+        },
+    });
+    return authResponse.data.access_token;
+}
+
+async function verifyWebhookEvent(req) {
+    const accessToken = await getPayPalAccessToken();
+
+    const verificationData = {
+        auth_algo: req.headers['paypal-auth-algo'],
+        cert_url: req.headers['paypal-cert-url'],
+        transmission_id: req.headers['paypal-transmission-id'],
+        transmission_sig: req.headers['paypal-transmission-sig'],
+        transmission_time: req.headers['paypal-transmission-time'],
+        webhook_id: req.body.id,
+        webhook_event: req.body
+    };
+
+    const verificationResponse = await axios.post('https://api.sandbox.paypal.com/v1/notifications/verify-webhook-signature', verificationData, {
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+        }
+    });
+
+    return verificationResponse.data.verification_status === 'SUCCESS';
 }

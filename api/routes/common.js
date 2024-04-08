@@ -4,6 +4,7 @@ const router = express.Router();
 const controllers = require('@controllers/common');
 
 router.post('/paypal/payouts', controllers.payouts);
-router.post('/paypal/payouts/batch', controllers.batchDetail);
+router.get('/paypal/payouts/batch/:batchId', controllers.batchDetail);
+router.post('/paypal/webhook', controllers.webhook);
 
 module.exports = router;
