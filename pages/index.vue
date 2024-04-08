@@ -3,31 +3,31 @@
     <button @click="clickPayouts">Payouts</button>
     <button @click="clickBatchDetail">Batch Detail</button>
     batchId = {{ batchId }}
+
+<!--        <div id="paypal-checkout" />-->
+
+    <pay-pal-button />
+
+
   </main>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref } from 'vue';
-
-interface PayoutBatchResponse {
-  payout_batch_id: string;
-  batch_status: "SUCCESS" | "PENDING" | "DENIED" | "PROCESSING" | "FAILED";
-  time_created: string;
-  time_completed: string;
-  sender_batch_header: {
-    sender_batch_id: string;
-    email_subject: string;
-  };
-  funding_source: "BALANCE" | "BANK" | "CREDIT_CARD" | "DEBIT_CARD";
-  amount: {
-    currency: string;
-    value: string;
-  };
-  fees: {
-    currency: string;
-    value: string;
-  };
-}
+// import { usePaypalButton } from '../src/runtime/composables/usePaypal'
+//
+// usePaypalButton({
+//
+//   // element: '#paypal-checkout', => default
+//   onApprove: async (data, actions) => {
+//     try {
+//       const details = await actions.order?.capture();
+//       console.log('Payment completed successfully:', details);
+//     } catch (error) {
+//       console.error('Error capturing payment:', error);
+//     }
+//   },
+// })
 
 const batchId = ref('');
 
@@ -43,7 +43,7 @@ const payoutData = ref({
         value: "1.00",
         currency: "USD"
       },
-      receiver: "example@example.com",
+      receiver: "mvpick.chan@gmail.com",
       note: "Payouts sample transaction",
       sender_item_id: `item-1-${Date.now()}`
     }
@@ -55,7 +55,7 @@ const clickPayouts = async () => {
     const result = await $fetch('/api/common/paypal/payouts', {
       method: 'POST',
       body: payoutData.value,
-      timeout: 5000
+      timeout: 10000
     });
 
     if (result && result.batchId) {
@@ -74,7 +74,7 @@ const clickBatchDetail = async () => {
   }
 
   try {
-    const { data, pending } = await useFetch<PayoutBatchResponse>(`/api/common/paypal/payouts/batch/${batchId.value}`, {
+    const { data, pending } = await useFetch(`/api/common/paypal/payouts/batch/${batchId.value}`, {
       method: 'GET'
     });
 
