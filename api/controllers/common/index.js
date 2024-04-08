@@ -65,7 +65,6 @@ module.exports.batchDetail = async function (req, res) {
 // webhook
 module.exports.webhook = async function (req, res) {
     try {
-        console.log('Verified Webhook Event:', req.body);
         const isValid = await verifyWebhookEvent(req);
         if (!isValid) {
             return res.status(401).send('Webhook verification failed');
@@ -91,7 +90,7 @@ module.exports.webhook = async function (req, res) {
 
         res.send('Webhook received and verified');
     } catch (error) {
-        console.error('Webhook handling error:');
+        console.error('Webhook handling error:', error);
         res.status(500).send('Internal Server Error');
     }
 }
@@ -116,12 +115,12 @@ async function verifyWebhookEvent(req) {
     const accessToken = await getPayPalAccessToken();
 
     const verificationData = {
-        auth_algo: req.headers['paypal-auth-algo'],
-        cert_url: req.headers['paypal-cert-url'],
+        webhook_id: process.env.WEBHOOK_ID,
         transmission_id: req.headers['paypal-transmission-id'],
-        transmission_sig: req.headers['paypal-transmission-sig'],
         transmission_time: req.headers['paypal-transmission-time'],
-        webhook_id: req.body.id,
+        cert_url: req.headers['paypal-cert-url'],
+        auth_algo: req.headers['paypal-auth-algo'],
+        transmission_sig: req.headers['paypal-transmission-sig'],
         webhook_event: req.body
     };
 
