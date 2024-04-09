@@ -1,7 +1,37 @@
 const axios = require('axios');
 const dotenv = require('dotenv');
 const path = require("path");
-dotenv.config({ path: path.resolve('.env') });
+dotenv.config({path: path.resolve('.env')});
+
+class DataHeader {
+    constructor(UTZPE_CNCT_IPAD, UTZPE_CNCT_MCHR_UNQ_ID, UTZPE_CNCT_TEL_NO_TXT, UTZPE_CNCT_MCHR_IDF_SRNO, UTZ_MCHR_OS_DSCD, UTZ_MCHR_OS_VER_NM, UTZ_MCHR_MDL_NM, UTZ_MCHR_APP_VER_NM) {
+        this.UTZPE_CNCT_IPAD = UTZPE_CNCT_IPAD;
+        this.UTZPE_CNCT_MCHR_UNQ_ID = UTZPE_CNCT_MCHR_UNQ_ID;
+        this.UTZPE_CNCT_TEL_NO_TXT = UTZPE_CNCT_TEL_NO_TXT;
+        this.UTZPE_CNCT_MCHR_IDF_SRNO = UTZPE_CNCT_MCHR_IDF_SRNO;
+        this.UTZ_MCHR_OS_DSCD = UTZ_MCHR_OS_DSCD;
+        this.UTZ_MCHR_OS_VER_NM = UTZ_MCHR_OS_VER_NM;
+        this.UTZ_MCHR_MDL_NM = UTZ_MCHR_MDL_NM;
+        this.UTZ_MCHR_APP_VER_NM = UTZ_MCHR_APP_VER_NM;
+    }
+}
+
+class DataBody {
+    constructor(WDR_ACNO, TRN_AM, RCV_BKCD, RCV_ACNO, PTN_PBOK_PRNG_TXT) {
+        this.WDR_ACNO = WDR_ACNO;
+        this.TRN_AM = TRN_AM;
+        this.RCV_BKCD = RCV_BKCD;
+        this.RCV_ACNO = RCV_ACNO;
+        this.PTN_PBOK_PRNG_TXT = PTN_PBOK_PRNG_TXT;
+    }
+}
+
+class RequestBody {
+    constructor(dataHeader, dataBody) {
+        this.dataHeader = dataHeader;
+        this.dataBody = dataBody;
+    }
+}
 
 module.exports.payouts = async function (req, res) {
     try {
@@ -36,7 +66,7 @@ module.exports.payouts = async function (req, res) {
 
 module.exports.batchDetail = async function (req, res) {
     try {
-        const { batchId } = req.params;
+        const {batchId} = req.params;
 
         if (!batchId) {
             res.status(500).send('Batch ID is required');
@@ -47,7 +77,7 @@ module.exports.batchDetail = async function (req, res) {
         const result = await axios.get('https://api-m.sandbox.paypal.com/v1/payments/payouts/' + batchId, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
+                'Content-Type': 'application/json',
             },
         });
 
@@ -84,6 +114,10 @@ module.exports.webhook = async function (req, res) {
                 // Handle successful payouts batch
                 console.log('Handling successful payouts batch:', req.body);
                 break;
+            case 'PAYMENT.CAPTURE.COMPLETED':
+                // Handle completed payment capture
+                console.log('Handling completed payment capture:', req.body);
+                break;
             default:
                 console.log('Received unhandled event type:', eventType);
         }
@@ -98,9 +132,9 @@ module.exports.webhook = async function (req, res) {
 // order
 module.exports.orders = async function (req, res) {
     try {
-        const { currency_code, value, email_address } = req.body;
+        const {currency_code, value, email_address} = req.body;
 
-        const orderData =  JSON.stringify({
+        const orderData = JSON.stringify({
             "intent": "CAPTURE",
             "purchase_units": [
                 {
@@ -158,7 +192,7 @@ module.exports.orders = async function (req, res) {
 
 async function getPayPalAccessToken() {
     const clientId = process.env.PayPalClientID; // PayPal Client ID
-    const secret =  process.env.PayPalSecret // PayPal Secret
+    const secret = process.env.PayPalSecret // PayPal Secret
 
     const authResponse = await axios.post('https://api.sandbox.paypal.com/v1/oauth2/token', 'grant_type=client_credentials', {
         headers: {
@@ -193,4 +227,178 @@ async function verifyWebhookEvent(req) {
     });
 
     return verificationResponse.data.verification_status === 'SUCCESS';
+}
+
+// transfer
+async function getWooriAccessToken() {
+    // 액세스 토큰 획득 로직 구현
+    return 'your_access_token'; // 예시 값
+}
+
+module.exports.getWooriAcctToWooriAcct = async function (req, res) {
+    try {
+        const accessToken = await getWooriAccessToken();
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'appkey': process.env.WOORI_API_KEY,
+            'token': accessToken
+        };
+
+        const data = new RequestBody(
+            new DataHeader(
+                dataHeader.UTZPE_CNCT_IPAD,
+                dataHeader.UTZPE_CNCT_MCHR_UNQ_ID,
+                dataHeader.UTZPE_CNCT_TEL_NO_TXT,
+                dataHeader.UTZPE_CNCT_MCHR_IDF_SRNO,
+                dataHeader.UTZ_MCHR_OS_DSCD,
+                dataHeader.UTZ_MCHR_OS_VER_NM,
+                dataHeader.UTZ_MCHR_MDL_NM,
+                dataHeader.UTZ_MCHR_APP_VER_NM
+            ),
+            new DataBody(
+                dataBody.WDR_ACNO,
+                dataBody.TRN_AM,
+                dataBody.RCV_BKCD,
+                dataBody.RCV_ACNO,
+                dataBody.PTN_PBOK_PRNG_TXT
+            )
+        );
+
+        const response = await axios.post('/oai/wb/v1/trans/getWooriAcctToWooriAcct', data, { headers });
+
+        console.log('Status:', response.status);
+        console.log('Headers:', response.headers);
+        console.log('Body:', response.data);
+
+        // Sending the response back
+        res.send(response.data);
+    } catch (error) {
+        console.error('Error during Woori transfer:', error);
+        res.status(500).send('Error processing Woori Transfer: ' + error.message);
+    }
+}
+
+module.exports.executeWooriAcctToWooriAcct = async function (req, res) {
+    try {
+        const {dataHeader, dataBody} = req.body;
+        const transferData = new RequestBody(
+            new DataHeader(
+                dataHeader.UTZPE_CNCT_IPAD,
+                dataHeader.UTZPE_CNCT_MCHR_UNQ_ID,
+                dataHeader.UTZPE_CNCT_TEL_NO_TXT,
+                dataHeader.UTZPE_CNCT_MCHR_IDF_SRNO,
+                dataHeader.UTZ_MCHR_OS_DSCD,
+                dataHeader.UTZ_MCHR_OS_VER_NM,
+                dataHeader.UTZ_MCHR_MDL_NM,
+                dataHeader.UTZ_MCHR_APP_VER_NM
+            ),
+            new DataBody(
+                dataBody.WDR_ACNO,
+                dataBody.TRN_AM,
+                dataBody.RCV_BKCD,
+                dataBody.RCV_ACNO,
+                dataBody.PTN_PBOK_PRNG_TXT
+            )
+        );
+
+        const accessToken = await getWooriAccessToken();
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'appkey': process.env.WOORI_API_KEY,
+            'token': accessToken
+        };
+
+        const transferResponse = await axios.post('https://localhost:8080/oai/wb/v1/trans/executeWooriAcctToWooriAcct', transferData, {headers});
+
+        res.json(transferResponse.data);
+    } catch (error) {
+        console.error('Error during Woori transfer:', error);
+        res.status(500).send('Error processing Woori Transfer: ' + error.message);
+    }
+}
+
+module.exports.getWooriAcctToOtherAcct = async function (req, res) {
+    try {
+        const accessToken = await getWooriAccessToken();
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'appkey': process.env.WOORI_API_KEY,
+            'token': accessToken
+        };
+
+        const data = new RequestBody(
+            new DataHeader(
+                dataHeader.UTZPE_CNCT_IPAD,
+                dataHeader.UTZPE_CNCT_MCHR_UNQ_ID,
+                dataHeader.UTZPE_CNCT_TEL_NO_TXT,
+                dataHeader.UTZPE_CNCT_MCHR_IDF_SRNO,
+                dataHeader.UTZ_MCHR_OS_DSCD,
+                dataHeader.UTZ_MCHR_OS_VER_NM,
+                dataHeader.UTZ_MCHR_MDL_NM,
+                dataHeader.UTZ_MCHR_APP_VER_NM
+            ),
+            new DataBody(
+                dataBody.WDR_ACNO,
+                dataBody.TRN_AM,
+                dataBody.RCV_BKCD,
+                dataBody.RCV_ACNO,
+                dataBody.PTN_PBOK_PRNG_TXT
+            )
+        );
+
+        const response = await axios.post('/oai/wb/v1/trans/getWooriAcctToOtherAcct', data, { headers });
+
+        console.log('Status:', response.status);
+        console.log('Headers:', response.headers);
+        console.log('Body:', response.data);
+
+        // Sending the response back
+        res.send(response.data);
+    } catch (error) {
+        console.error('Error during Woori transfer:', error);
+        res.status(500).send('Error processing Woori Transfer: ' + error.message);
+    }
+}
+
+module.exports.executeWooriAcctToOtherAcct = async function (req, res) {
+    try {
+        const {dataHeader, dataBody} = req.body;
+        const transferData = new RequestBody(
+            new DataHeader(
+                dataHeader.UTZPE_CNCT_IPAD,
+                dataHeader.UTZPE_CNCT_MCHR_UNQ_ID,
+                dataHeader.UTZPE_CNCT_TEL_NO_TXT,
+                dataHeader.UTZPE_CNCT_MCHR_IDF_SRNO,
+                dataHeader.UTZ_MCHR_OS_DSCD,
+                dataHeader.UTZ_MCHR_OS_VER_NM,
+                dataHeader.UTZ_MCHR_MDL_NM,
+                dataHeader.UTZ_MCHR_APP_VER_NM
+            ),
+            new DataBody(
+                dataBody.WDR_ACNO,
+                dataBody.TRN_AM,
+                dataBody.RCV_BKCD,
+                dataBody.RCV_ACNO,
+                dataBody.PTN_PBOK_PRNG_TXT
+            )
+        );
+
+        const accessToken = await getWooriAccessToken();
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'appkey': process.env.WOORI_API_KEY,
+            'token': accessToken
+        };
+
+        const transferResponse = await axios.post('https://localhost:8080/oai/wb/v1/trans/executeWooriAcctToWooriAcct', transferData, {headers});
+
+        res.json(transferResponse.data);
+    } catch (error) {
+        console.error('Error during Woori transfer:', error);
+        res.status(500).send('Error processing Woori Transfer: ' + error.message);
+    }
 }
