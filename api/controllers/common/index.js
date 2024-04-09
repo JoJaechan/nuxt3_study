@@ -95,6 +95,67 @@ module.exports.webhook = async function (req, res) {
     }
 }
 
+// order
+module.exports.orders = async function (req, res) {
+    try {
+        const { currency_code, value, email_address } = req.body;
+
+        const orderData =  JSON.stringify({
+            "intent": "CAPTURE",
+            "purchase_units": [
+                {
+                    "items": [
+                        {
+                            "name": "T-Shirt",
+                            "description": "Green XL",
+                            "quantity": "1",
+                            "unit_amount": {
+                                "currency_code": "USD",
+                                "value": value
+                            }
+                        }
+                    ],
+                    "amount": {
+                        "currency_code": currency_code,
+                        "value": value,
+                        "breakdown": {
+                            "item_total": {
+                                "currency_code": currency_code,
+                                "value": value
+                            }
+                        }
+                    },
+                    "payee": {
+                        "email_address": email_address
+                    }
+                }
+            ],
+            "application_context": {
+                "return_url": "https://example.com/return",
+                "cancel_url": "https://example.com/cancel"
+            }
+        });
+
+        const accessToken = await getPayPalAccessToken();
+
+        const orderResponse = await axios.post('https://api.sandbox.paypal.com/v2/checkout/orders', orderData, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!orderResponse) {
+            res.status(500).send('Failed to process PayPal Order');
+        }
+
+        res.json(orderResponse.data);
+    } catch (error) {
+        console.error('Error PayPal orders');
+        res.status(500).send('Error processing PayPal Order' + error);
+    }
+}
+
 async function getPayPalAccessToken() {
     const clientId = process.env.PayPalClientID; // PayPal Client ID
     const secret =  process.env.PayPalSecret // PayPal Secret

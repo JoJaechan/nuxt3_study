@@ -3,31 +3,31 @@
     <button @click="clickPayouts">Payouts</button>
     <button @click="clickBatchDetail">Batch Detail</button>
     batchId = {{ batchId }}
-
-<!--        <div id="paypal-checkout" />-->
-
-    <pay-pal-button />
-
-
+    <div id="paypal-checkout"/>
   </main>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-// import { usePaypalButton } from '../src/runtime/composables/usePaypal'
-//
-// usePaypalButton({
-//
-//   // element: '#paypal-checkout', => default
-//   onApprove: async (data, actions) => {
-//     try {
-//       const details = await actions.order?.capture();
-//       console.log('Payment completed successfully:', details);
-//     } catch (error) {
-//       console.error('Error capturing payment:', error);
-//     }
-//   },
-// })
+import {ref} from 'vue';
+import {usePaypalButton} from '../src/runtime/composables/usePaypal'
+
+usePaypalButton({
+  createOrder() {
+    return fetch("/api/common/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        currency_code: "USD",
+        value: "1.00",
+        email_address: "mvpick.chan@gmail.com"
+      })
+    })
+        .then((response) => response.json())
+        .then((order) => order.id);
+  },
+})
 
 const batchId = ref('');
 
@@ -74,7 +74,7 @@ const clickBatchDetail = async () => {
   }
 
   try {
-    const { data, pending } = await useFetch(`/api/common/paypal/payouts/batch/${batchId.value}`, {
+    const {data, pending} = await useFetch(`/api/common/paypal/payouts/batch/${batchId.value}`, {
       method: 'GET'
     });
 
