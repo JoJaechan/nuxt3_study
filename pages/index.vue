@@ -54,7 +54,7 @@ usePaypalButton({
             }
           },
           payee: {
-            email_address: "mvpick.chan@gmail.com"
+            email_address: "sb-aauzz23973603@personal.example.com"
           }
         }],
       })
