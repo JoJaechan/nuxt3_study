@@ -21,6 +21,7 @@
   "_moduleAliases": {
     "@root": ".",
     "@controllers": "./controllers",
-    "@routes": "./routes"
+    "@routes": "./routes",
+    "@services": "./services"
   }
 }
