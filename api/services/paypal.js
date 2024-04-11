@@ -1,5 +1,4 @@
 const axios = require('axios');
-const crypto = require('crypto');
 const {PayPalClientID, PayPalSecret} = process.env;
 const endPointOrders = 'https://api.sandbox.paypal.com/v2/checkout/orders';
 const endPointPayouts = 'https://api.sandbox.paypal.com/v1/payments/payouts';
@@ -42,11 +41,9 @@ async function verifyWebhookEvent(req) {
 
 async function payouts(req) {
     try {
-        const postData = req.body;
-
         const accessToken = await getPayPalAccessToken();
 
-        const payoutResponse = await axios.post(endPointPayouts, payoutData, {
+        const payoutResponse = await axios.post(endPointPayouts, req.body, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
@@ -54,12 +51,12 @@ async function payouts(req) {
         });
 
         if (!payoutResponse) {
-            throw new BadRequestError('Failed to process PayPal Payout');
+            throw new Error('Failed to process PayPal Payout');
         }
 
         return payoutResponse;
     } catch (e) {
-        throw new BadRequestError('SMS_SEND_FAIL');
+        throw new Error('SMS_SEND_FAIL');
     }
 }
 
@@ -68,7 +65,7 @@ async function batchDetail(req) {
         const {batchId} = req.params; // required
         const {page, page_size, total_required} = req.params; // optional
         if (!batchId) {
-            throw new BadRequestError('Batch ID is required');
+            throw new Error('Batch ID is required');
         }
 
         const accessToken = await getPayPalAccessToken();
@@ -81,12 +78,12 @@ async function batchDetail(req) {
         });
 
         if (!result || !result.data) {
-            throw new BadRequestError('Failed to process PayPal Payout');
+            throw new Error('Failed to process PayPal Payout');
         }
 
         return result;
     } catch (e) {
-        throw new BadRequestError('batchDetail');
+        throw new Error('batchDetail');
     }
 }
 
@@ -94,7 +91,7 @@ async function webhook(req) {
     try {
         const isValid = await verifyWebhookEvent(req);
         if (!isValid) {
-            throw new BadRequestError('Webhook verification failed');
+            throw new Error('Webhook verification failed');
         }
 
         const eventType = req.body.event_type;
@@ -109,94 +106,21 @@ async function webhook(req) {
                 break;
             default: {
                 console.error('Received unhandled event type:', eventType);
-                throw new BadRequestError('Received unhandled event type');
+                throw new Error('Received unhandled event type');
             }
         }
 
         return;
     } catch (e) {
-        throw new BadRequestError('webhook');
+        throw new Error(e);
     }
 }
 
-class PurchaseUnit {
-    constructor(items, amount, payee) {
-        if (!amount || !amount.currency_code || !amount.value) {
-            throw new Error("Amount with currency_code and value is required");
-        }
-        this.items = items;
-        this.amount = new Amount(amount.currency_code, amount.value, amount.breakdown);
-        this.payee = new Payee(payee.email_address);
-    }
-}
-
-class Item {
-    constructor(name, description, quantity, unitAmount) {
-        this.name = name;
-        this.description = description;
-        this.quantity = quantity;
-        this.unitAmount = unitAmount;
-    }
-}
-
-class Amount {
-    constructor(currencyCode, value, breakdown) {
-        this.currency_code = currencyCode;
-        this.value = value;
-        this.breakdown = breakdown;
-    }
-}
-
-class Payee {
-    constructor(emailAddress) {
-        this.email_address = emailAddress;
-    }
-}
-
-class OrderData {
-    constructor(intent, purchaseUnits, experienceContext) {
-        if (!intent || !purchaseUnits) {
-            throw new Error("Intent and at least one PurchaseUnit are required");
-        }
-        this.intent = intent;
-        this.purchase_units = purchaseUnits.map(pu => new PurchaseUnit(
-            pu.items.map(item => new Item(item.name, item.description, item.quantity, item.unitAmount)),
-            pu.amount,
-            pu.payee
-        ));
-        // Incorporate the experience context directly into the PayPal payment source
-        this.payment_source = {
-            paypal: {
-                experience_context: experienceContext
-            }
-        };
-    }
-}
-
-async function orders(req) {
+async function captureOrder(req) {
     try {
-        const { items, currency_code, email_address, experienceContext } = req.body;
+        const accessToken = await getPayPalAccessToken();
 
-        const purchaseUnits = items.map(item => ({
-            amount: {
-                currency_code: currency_code,
-                value: item.unit_price * item.quantity,
-                breakdown: {
-                    item_total: {
-                        currency_code: currency_code,
-                        value: item.unit_price * item.quantity
-                    }
-                }
-            },
-            items: [item],
-            payee: {
-                email_address: email_address
-            }
-        }));
-
-        const orderData = new OrderData("CAPTURE", purchaseUnits, experienceContext);
-
-        const orderResponse = await axios.post(endPointOrders, orderData, {
+        const orderResponse = await axios.post(endPointOrders, JSON.stringify(req.body), {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
@@ -210,7 +134,7 @@ async function orders(req) {
 
         return orderResponse;
     } catch (e) {
-        throw new BadRequestError('batchDetail');
+        throw new Error('captureOrder' + e);
     }
 }
 
@@ -218,5 +142,5 @@ module.exports = {
     payouts, //  (B2C -> 1:1)
     batchDetail, // payouts result detail
     webhook, // webhook event processing
-    orders, // (BC2 -> 1:N)
+    captureOrder, // (BC2 -> 1:N)
 };

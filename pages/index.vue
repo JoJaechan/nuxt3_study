@@ -11,17 +11,52 @@
 import {ref} from 'vue';
 import {usePaypalButton} from '../src/runtime/composables/usePaypal'
 
+const originalItems = ref([
+  {
+    name: 'payment',
+    description: 'payment desc',
+    quantity: 1,
+    unit_price: '1.00'
+  }
+]);
+
+const items = ref(originalItems.value.map(item => ({
+  name: item.name,
+  description: item.description,
+  quantity: item.quantity.toString(), // quantity를 문자열로 변환
+  unit_amount: { // unit_price 대신 unit_amount 사용
+    currency_code: "USD",
+    value: item.unit_price
+  }
+})));
+
 usePaypalButton({
   createOrder() {
+    const totalValue = items.value.reduce((acc, item) => acc + (item.quantity * parseFloat(item.unit_price)), 0).toFixed(2);
+
     return fetch("/api/common/orders", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        currency_code: "USD",
-        value: "1.00",
-        email_address: "mvpick.chan@gmail.com"
+        intent: "CAPTURE",
+        purchase_units: [{
+          items: items.value,
+          amount: {
+            currency_code: "USD",
+            value: "1.00", // 총 금액을 직접 지정
+            breakdown: {
+              item_total: { // 각 항목의 총합을 나타내는 breakdown 추가
+                currency_code: "USD",
+                value: "1.00"
+              }
+            }
+          },
+          payee: {
+            email_address: "mvpick.chan@gmail.com"
+          }
+        }],
       })
     })
         .then((response) => response.json())

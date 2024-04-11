@@ -78,11 +78,11 @@ module.exports.webhook = async function (req, res) {
 
 module.exports.orders = async function (req, res) {
     try {
-        const orderResponse = await paypal.orders(req);
+        const orderResponse = await paypal.captureOrder(req);
 
         res.json(orderResponse.data);
     } catch (error) {
-        console.error('Error PayPal orders');
+        console.error('Error PayPal orders', error);
         res.status(500).send('Error processing PayPal Order' + error);
     }
 }
