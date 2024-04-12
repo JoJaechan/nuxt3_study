@@ -1,5 +1,8 @@
 <template>
+  <button @click="clickpdfDownload">PDF Download</button>
+  <ProgressSpinner v-if="loading" mode="indeterminate" style="background-color: gray; color: #007ad9;" />
   <main>
+
     <button @click="clickPayouts">Payouts</button>
     <button @click="clickBatchDetail">Batch Detail</button>
     batchId = {{ batchId }}
@@ -10,6 +13,9 @@
 <script setup>
 import {ref} from 'vue';
 import {usePaypalButton} from '../src/runtime/composables/usePaypal'
+import 'primevue/resources/themes/saga-blue/theme.css'; // 테마에 따라 변경 가능
+
+const loading = ref(false);
 
 const originalItems = ref([
   {
@@ -126,4 +132,33 @@ const clickBatchDetail = async () => {
     console.error('Error fetching payout details:', error);
   }
 };
+
+const clickpdfDownload = async () => {
+  try {
+    loading.value = true;
+
+    const result = await $fetch('/api/common/pdf', {
+      method: 'GET',
+    });
+
+    console.log('PDF result:', result);
+
+    const url = window.URL.createObjectURL(result);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'downloaded_file.pdf'); // 다운로드할 파일명 지정
+    document.body.appendChild(link);
+    link.click();
+
+    // 다운로드 후 링크 제거
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url); // 생성된 URL을 메모리에서 제거
+
+    console.log('PDF 다운로드가 완료되었습니다.');
+  } catch (e) {
+    console.error('Error during generatePdf:', e);
+  } finally {
+    loading.value = false;
+  }
+}
 </script>

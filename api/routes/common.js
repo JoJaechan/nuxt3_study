@@ -14,4 +14,6 @@ router.post('/woori/transfer', controllers.executeWooriAcctToWooriAcct); // 당�
 router.get('/woori/transfer/other', controllers.getWooriAcctToOtherAcct); // 타행간 이체조회
 router.post('/woori/transfer/other', controllers.executeWooriAcctToOtherAcct); // 타행간 이제실행
 
+router.get('/pdf', controllers.getPDF); // PDF 생성
+
 module.exports = router;

@@ -4,6 +4,7 @@ const path = require("path");
 dotenv.config({path: path.resolve('.env')});
 const paypalService = require('@services/paypal');
 const wooribankService = require('@services/wooribank');
+const pdfService = require('@services/pdf');
 
 module.exports.createPayouts = async function (req, res) {
     try {
@@ -110,5 +111,16 @@ module.exports.executeWooriAcctToOtherAcct = async function (req, res) {
     } catch (error) {
         console.error('Error during Woori transfer:', error);
         res.status(500).send('Error processing Woori Transfer: ' + error.message);
+    }
+}
+
+// PDF 생성
+module.exports.getPDF = async function (req, res) {
+    try {
+        const pdf = await pdfService.generatePDF(req, res);
+        res.send(pdf);
+    } catch (error) {
+        console.error('Error during PDF generation:', error);
+        res.status(500).send('Error processing PDF generation: ' + error.message);
     }
 }
