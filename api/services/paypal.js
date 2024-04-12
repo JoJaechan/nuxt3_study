@@ -43,20 +43,15 @@ async function payouts(req) {
     try {
         const accessToken = await getPayPalAccessToken();
 
-        const payoutResponse = await axios.post(endPointPayouts, req.body, {
+        return await axios.post(endPointPayouts, req.body, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
             },
         });
-
-        if (!payoutResponse) {
-            throw new Error('Failed to process PayPal Payout');
-        }
-
-        return payoutResponse;
     } catch (e) {
-        throw new Error('SMS_SEND_FAIL');
+        console.error(e);
+        throw new Error('payouts Error', e.message);
     }
 }
 
@@ -64,34 +59,30 @@ async function batchDetail(req) {
     try {
         const {batchId} = req.params; // required
         const {page, page_size, total_required} = req.params; // optional
-        if (!batchId) {
-            throw new Error('Batch ID is required');
-        }
 
         const accessToken = await getPayPalAccessToken();
 
-        const result = await axios.get('https://api-m.sandbox.paypal.com/v1/payments/payouts/' + batchId, {
+        const baseUrl = 'https://api-m.sandbox.paypal.com/v1/payments/payouts/' + batchId;
+        let url = page && page_size ? `${baseUrl}?page=${page}&page_size=${page_size}` : baseUrl;
+        url = total_required ? `${url}&total_required=true` : url;
+
+        return await axios.get(url, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
             },
         });
-
-        if (!result || !result.data) {
-            throw new Error('Failed to process PayPal Payout');
-        }
-
-        return result;
     } catch (e) {
-        throw new Error('batchDetail');
+        console.error('Error fetching PayPal batch detail: ', e.message);
+        throw new Error(`Error in batchDetail: ${e.message}`);
     }
 }
 
-async function webhook(req) {
+async function webhookProcess(req) {
     try {
         const isValid = await verifyWebhookEvent(req);
         if (!isValid) {
-            throw new Error('Webhook verification failed');
+            return null;
         }
 
         const eventType = req.body.event_type;
@@ -106,13 +97,14 @@ async function webhook(req) {
                 break;
             default: {
                 console.error('Received unhandled event type:', eventType);
-                throw new Error('Received unhandled event type');
+                return null;
             }
         }
 
-        return;
+        return eventType;
     } catch (e) {
-        throw new Error(e);
+        console.error('Error processing webhook:', e.message);
+        throw e;
     }
 }
 
@@ -134,13 +126,13 @@ async function captureOrder(req) {
 
         return orderResponse;
     } catch (e) {
-        throw new Error('captureOrder' + e);
+        throw new Error('captureOrder Error' + e);
     }
 }
 
 module.exports = {
     payouts, //  (B2C -> 1:1)
     batchDetail, // payouts result detail
-    webhook, // webhook event processing
+    webhookProcess, // webhook event processing
     captureOrder, // (BC2 -> 1:N)
 };

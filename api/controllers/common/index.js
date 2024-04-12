@@ -5,7 +5,7 @@ dotenv.config({path: path.resolve('.env')});
 const paypalService = require('@services/paypal');
 const wooribankService = require('@services/wooribank');
 
-module.exports.payouts = async function (req, res) {
+module.exports.createPayouts = async function (req, res) {
     try {
         const payoutResponse = await paypalService.payouts(req);
         const batchId = payoutResponse.data.batch_header.payout_batch_id
@@ -21,7 +21,7 @@ module.exports.payouts = async function (req, res) {
     }
 }
 
-module.exports.batchDetail = async function (req, res) {
+module.exports.getBatchDetail = async function (req, res) {
     try {
         const {batchId} = req.params;
 
@@ -40,14 +40,14 @@ module.exports.batchDetail = async function (req, res) {
 
 module.exports.webhook = async function (req, res) {
     try {
-        await paypalService.webhook(req);
+        await paypalService.webhookProcess(req);
         res.send('Webhook received and verified');
     } catch (error) {
         console.error('Webhook handling error:', error);
     }
 }
 
-module.exports.orders = async function (req, res) {
+module.exports.ordersCapture = async function (req, res) {
     try {
         const orderResponse = await paypalService.captureOrder(req);
 

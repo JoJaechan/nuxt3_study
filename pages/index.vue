@@ -32,9 +32,7 @@ const items = ref(originalItems.value.map(item => ({
 
 usePaypalButton({
   createOrder() {
-    const totalValue = items.value.reduce((acc, item) => acc + (item.quantity * parseFloat(item.unit_price)), 0).toFixed(2);
-
-    return fetch("/api/common/orders", {
+    return fetch("/api/common/orders/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -62,6 +60,10 @@ usePaypalButton({
         .then((response) => response.json())
         .then((order) => order.id);
   },
+
+  onApprove(data) {
+    console.log('onApprove', data)
+  }
 })
 
 const batchId = ref('');

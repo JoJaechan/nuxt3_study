@@ -3,10 +3,10 @@ const router = express.Router();
 
 const controllers = require('@controllers/common');
 
-router.post('/paypal/payouts', controllers.payouts);
-router.get('/paypal/payouts/batch/:batchId', controllers.batchDetail);
+router.post('/paypal/payouts', controllers.createPayouts);
+router.get('/paypal/payouts/batch/:batchId', controllers.getBatchDetail);
 router.post('/paypal/webhook', controllers.webhook);
-router.post('/orders', controllers.orders);
+router.post('/orders/capture', controllers.ordersCapture);
 
 router.get('/woori/transfer', controllers.getWooriAcctToWooriAcct); // 당행간 이체조회
 router.post('/woori/transfer', controllers.executeWooriAcctToWooriAcct); // 당행간 이제실행
