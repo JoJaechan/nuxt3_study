@@ -49,7 +49,18 @@ module.exports.webhook = async function (req, res) {
 
 module.exports.ordersCapture = async function (req, res) {
     try {
-        const orderResponse = await paypalService.captureOrder(req);
+        const orderResponse = await paypalService.captureOrder(req, res);
+
+        res.json(orderResponse.data);
+    } catch (error) {
+        console.error('Error PayPal orders', error);
+        res.status(500).send('Error processing PayPal Order' + error);
+    }
+}
+
+module.exports.getOrdersDetail = async function (req, res) {
+    try {
+        const orderResponse = await paypalService.orderDetail(req);
 
         res.json(orderResponse.data);
     } catch (error) {

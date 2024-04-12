@@ -2,9 +2,12 @@ const axios = require('axios');
 const {PayPalClientID, PayPalSecret} = process.env;
 const endPointOrders = 'https://api.sandbox.paypal.com/v2/checkout/orders';
 const endPointPayouts = 'https://api.sandbox.paypal.com/v1/payments/payouts';
+const endPointToken = 'https://api.sandbox.paypal.com/v1/oauth2/token';
+const endPointWebhook = 'https://api.sandbox.paypal.com/v1/notifications/verify-webhook-signature';
+const endPointOrdersDetail = 'https://api-m.sandbox.paypal.com/v2/checkout/orders'
 
 async function getPayPalAccessToken() {
-    const authResponse = await axios.post('https://api.sandbox.paypal.com/v1/oauth2/token', 'grant_type=client_credentials', {
+    const authResponse = await axios.post(endPointToken, 'grant_type=client_credentials', {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -29,7 +32,7 @@ async function verifyWebhookEvent(req) {
         webhook_event: req.body
     };
 
-    const verificationResponse = await axios.post('https://api.sandbox.paypal.com/v1/notifications/verify-webhook-signature', verificationData, {
+    const verificationResponse = await axios.post(endPointWebhook, verificationData, {
         headers: {
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'
@@ -108,7 +111,7 @@ async function webhookProcess(req) {
     }
 }
 
-async function captureOrder(req) {
+async function captureOrder(req, res) {
     try {
         const accessToken = await getPayPalAccessToken();
 
@@ -118,7 +121,6 @@ async function captureOrder(req) {
                 'Content-Type': 'application/json',
             },
         });
-
 
         if (!orderResponse) {
             res.status(500).send('Failed to process PayPal Order');
@@ -130,9 +132,32 @@ async function captureOrder(req) {
     }
 }
 
+async function orderDetail(req, res) {
+    try {
+        const {id} = req.params; // required
+        const accessToken = await getPayPalAccessToken();
+
+        const orderResponse = await axios.post(endPointOrdersDetail + '/' + id, JSON.stringify(req.body), {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!orderResponse) {
+            res.status(500).send('Failed to process OrderDetail');
+        }
+
+        return orderResponse;
+    } catch (e) {
+        throw new Error('OrderDetail Error' + e);
+    }
+}
+
 module.exports = {
     payouts, //  (B2C -> 1:1)
     batchDetail, // payouts result detail
     webhookProcess, // webhook event processing
     captureOrder, // (BC2 -> 1:N)
+    orderDetail,
 };
