@@ -5,9 +5,10 @@ export default defineNuxtConfig({
     },
     modules: [
         'nuxt-paypal',
+        'nuxt-primevue'
     ],
     paypal: {
-        clientId: 'AeUyK1zdnJgubHnMQKu5I9Zdk0Qz6rSvPX61C_oF6Tu0Vw0_jxUZcDom4imLMkVJMPhqHwPqdo19cPKv',
+        clientId: process.env.PayPalClientID
     },
     nitro: {
         devProxy: {
@@ -16,5 +17,7 @@ export default defineNuxtConfig({
                 changeOrigin: true,
             }
         }
+    },
+    primevue: {
     }
 })

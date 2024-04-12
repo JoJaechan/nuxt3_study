@@ -14,9 +14,12 @@
     "node-fetch": "^3.3.2",
     "nuxt": "^3.11.1",
     "vue": "^3.4.21",
-    "vue-router": "^4.3.0"
+    "vue-router": "^4.3.0",
+    "primeicons": "^6.0.1",
+    "primevue": "^3.48.1"
   },
   "devDependencies": {
-    "nuxt-paypal": "^0.0.1-beta"
+    "nuxt-paypal": "^0.0.1-beta",
+    "nuxt-primevue": "^0.3.0"
   }
 }
