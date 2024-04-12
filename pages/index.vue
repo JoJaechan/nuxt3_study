@@ -139,6 +139,7 @@ const clickpdfDownload = async () => {
 
     const result = await $fetch('/api/common/pdf', {
       method: 'GET',
+      responseType: 'blob'  // 서버로부터 blob 형태로 PDF 데이터를 받음
     });
 
     console.log('PDF result:', result);
@@ -146,7 +147,8 @@ const clickpdfDownload = async () => {
     const url = window.URL.createObjectURL(result);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'downloaded_file.pdf'); // 다운로드할 파일명 지정
+    // link.setAttribute('download', 'downloaded_file.pdf'); // 다운로드할 파일명 지정
+    link.target = '_blank';  // 새 창 또는 탭에서 링크를 열기 위해 target='_blank'를 설정
     document.body.appendChild(link);
     link.click();
 

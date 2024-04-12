@@ -118,6 +118,8 @@ module.exports.executeWooriAcctToOtherAcct = async function (req, res) {
 module.exports.getPDF = async function (req, res) {
     try {
         const pdf = await pdfService.generatePDF(req, res);
+
+        res.contentType('application/pdf');
         res.send(pdf);
     } catch (error) {
         console.error('Error during PDF generation:', error);
