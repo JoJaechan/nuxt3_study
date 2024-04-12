@@ -10,26 +10,27 @@ const API_ENDPOINTS = {
 
 const HOST = 'https://localhost:8080';
 
+// 모든 헤더, 바디의 type은 string
 class DataHeader {
     constructor(UTZPE_CNCT_IPAD, UTZPE_CNCT_MCHR_UNQ_ID, UTZPE_CNCT_TEL_NO_TXT, UTZPE_CNCT_MCHR_IDF_SRNO, UTZ_MCHR_OS_DSCD, UTZ_MCHR_OS_VER_NM, UTZ_MCHR_MDL_NM, UTZ_MCHR_APP_VER_NM) {
-        this.UTZPE_CNCT_IPAD = UTZPE_CNCT_IPAD;
-        this.UTZPE_CNCT_MCHR_UNQ_ID = UTZPE_CNCT_MCHR_UNQ_ID;
-        this.UTZPE_CNCT_TEL_NO_TXT = UTZPE_CNCT_TEL_NO_TXT;
-        this.UTZPE_CNCT_MCHR_IDF_SRNO = UTZPE_CNCT_MCHR_IDF_SRNO;
-        this.UTZ_MCHR_OS_DSCD = UTZ_MCHR_OS_DSCD;
-        this.UTZ_MCHR_OS_VER_NM = UTZ_MCHR_OS_VER_NM;
-        this.UTZ_MCHR_MDL_NM = UTZ_MCHR_MDL_NM;
-        this.UTZ_MCHR_APP_VER_NM = UTZ_MCHR_APP_VER_NM;
+        this.UTZPE_CNCT_IPAD = UTZPE_CNCT_IPAD; // 이용자접속IP주소
+        this.UTZPE_CNCT_MCHR_UNQ_ID = UTZPE_CNCT_MCHR_UNQ_ID; // 이용자접속기기고유ID
+        this.UTZPE_CNCT_TEL_NO_TXT = UTZPE_CNCT_TEL_NO_TXT; // 이용자접속전화번호
+        this.UTZPE_CNCT_MCHR_IDF_SRNO = UTZPE_CNCT_MCHR_IDF_SRNO; // 이용자접속기기식별일련번호
+        this.UTZ_MCHR_OS_DSCD = UTZ_MCHR_OS_DSCD; // 이용자기기OS구분코드
+        this.UTZ_MCHR_OS_VER_NM = UTZ_MCHR_OS_VER_NM; // 이용자기기OS버전명
+        this.UTZ_MCHR_MDL_NM = UTZ_MCHR_MDL_NM; // 이용자기기모델명
+        this.UTZ_MCHR_APP_VER_NM = UTZ_MCHR_APP_VER_NM; // 이용자기기앱버전명
     }
 }
 
 class DataBody {
     constructor(WDR_ACNO, TRN_AM, RCV_BKCD, RCV_ACNO, PTN_PBOK_PRNG_TXT) {
-        this.WDR_ACNO = WDR_ACNO;
-        this.TRN_AM = TRN_AM;
-        this.RCV_BKCD = RCV_BKCD;
-        this.RCV_ACNO = RCV_ACNO;
-        this.PTN_PBOK_PRNG_TXT = PTN_PBOK_PRNG_TXT;
+        this.WDR_ACNO = WDR_ACNO; // 출금계좌번호
+        this.TRN_AM = TRN_AM; // 거래금액
+        this.RCV_BKCD = RCV_BKCD; // 입금은행코드
+        this.RCV_ACNO = RCV_ACNO; // 입금계좌번호
+        this.PTN_PBOK_PRNG_TXT = PTN_PBOK_PRNG_TXT; // 상대통장인자내용
     }
 }
 
