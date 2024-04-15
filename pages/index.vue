@@ -1,5 +1,7 @@
 <template>
   <button @click="clickpdfDownload">PDF Download</button>
+  <button @click="clickuserLogin">LOGIN</button>
+  <button @click="clickgetUserInfo">GET USER INFO</button>
   <ProgressSpinner v-if="loading" mode="indeterminate" style="background-color: gray; color: #007ad9;" />
   <main>
 
@@ -161,6 +163,34 @@ const clickpdfDownload = async () => {
     console.error('Error during generatePdf:', e);
   } finally {
     loading.value = false;
+  }
+}
+
+const clickuserLogin = async () => {
+  try {
+    const res = await $fetch('/api/common/sign/in', {
+      method: 'POST',
+      data: {
+          loginId: 'test',
+          password: 'test'
+      }
+    });
+
+    console.log('Login result:', res);
+  } catch (e) {
+    console.error('Error during login:', e);
+  }
+}
+
+const clickgetUserInfo = async () => {
+  try {
+    const res = await $fetch('/api/user/info', {
+      method: 'GET'
+    });
+
+    console.log('User Info:', res);
+  } catch (e) {
+    console.error('Error during getUserInfo:', e);
   }
 }
 </script>

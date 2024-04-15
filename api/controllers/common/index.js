@@ -5,6 +5,7 @@ dotenv.config({path: path.resolve('.env')});
 const paypalService = require('@services/paypal');
 const wooribankService = require('@services/wooribank');
 const pdfService = require('@services/pdf');
+const cipher = require('@utils/cipher');
 
 module.exports.createPayouts = async function (req, res) {
     try {
@@ -124,5 +125,32 @@ module.exports.getPDF = async function (req, res) {
     } catch (error) {
         console.error('Error during PDF generation:', error);
         res.status(500).send('Error processing PDF generation: ' + error.message);
+    }
+}
+
+// 로그인
+module.exports.signIn = async function (req, res) {
+    try {
+        const tokenInfo = {
+            id: 1000,
+        };
+
+        const jwt = cipher.JWTCreate(tokenInfo);
+
+        res.cookie('ACCESS_TOKEN', jwt.accessToken, {
+            expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            httpOnly: true,
+            sameSite: 'strict'
+        });
+        res.cookie('REFRESH_TOKEN', jwt.refreshToken, {
+            expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+            httpOnly: true,
+            sameSite: 'strict'
+        });
+
+        res.json({message: 'Sign In Success'});
+    } catch (error) {
+        console.error('Error during Sign In:', error);
+        res.status(500).send('Error processing Sign In: ' + error.message);
     }
 }

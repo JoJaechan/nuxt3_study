@@ -7,7 +7,13 @@ app.use(express.json());
 
 require('module-alias/register');
 const commonRouter = require('@routes/common');
+const userRouter = require('@routes/user');
+const userHandler = require('@middlewares/userHandler');
+const cookieParser = require('cookie-parser');
+
+app.use(cookieParser());
 app.use('/common', commonRouter);
+app.use('/user', userHandler, userRouter);
 
 app.get('/', (req, res) => {
     console.log('test')

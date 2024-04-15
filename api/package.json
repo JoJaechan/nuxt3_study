@@ -23,6 +23,8 @@
     "@root": ".",
     "@controllers": "./controllers",
     "@routes": "./routes",
-    "@services": "./services"
+    "@services": "./services",
+    "@utils": "./utils",
+    "@middlewares": "./middlewares"
   }
 }
