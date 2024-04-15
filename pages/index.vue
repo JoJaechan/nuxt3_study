@@ -141,6 +141,10 @@ const clickpdfDownload = async () => {
 
     const result = await $fetch('/api/common/pdf', {
       method: 'GET',
+      // 원하는 url을 parameter로 전달
+      params: {
+        url: 'http://localhost:3000'
+      },
       responseType: 'blob'  // 서버로부터 blob 형태로 PDF 데이터를 받음
     });
 

@@ -1,11 +1,13 @@
 const puppeteer = require('puppeteer');
 
-async function generatePDF(req, res) {
+async function generatePDF(req) {
     try {
         const browser = await puppeteer.launch();
         const page = await browser.newPage();
 
-        await page.goto('http://localhost:3000', { waitUntil: 'networkidle2' });
+        const url = req.query.url;
+
+        await page.goto(url, { waitUntil: 'networkidle2' });
 
         const pdfBuffer = await page.pdf({
             // path: 'example.pdf', // PDF 파일 경로와 이름
