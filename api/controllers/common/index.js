@@ -119,9 +119,6 @@ module.exports.executeWooriAcctToOtherAcct = async function (req, res) {
 module.exports.getPDF = async function (req, res) {
     try {
         const pdf = await puppeteer.generatePDF(req, res);
-
-        //res.contentType('application/pdf');
-        //res.send(pdf);
         res.json(pdf);
     } catch (error) {
         console.error('Error during PDF generation:', error);
@@ -133,9 +130,6 @@ module.exports.getPDF = async function (req, res) {
 module.exports.getExcel = async function (req, res) {
     try {
         const xlsx = await puppeteer.generateExcel(req, res);
-
-        //res.contentType('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        //res.send(xlsx);
         res.json(xlsx);
     } catch (error) {
         console.error('Error during Excel generation:', error);

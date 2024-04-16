@@ -151,14 +151,14 @@ const clickPdfDownload = async () => {
       // 원하는 url을 parameter로 전달, path전달시에는 백엔드 서버에 저장됨
       params: {
         url: 'https://dsec.mvpick.net/',
-        //path: 'test.pdf'
+        //filepath: 'test.pdf'
       },
     });
 
-    const url = window.URL.createObjectURL(base64ToBlob(result));
+    const url = window.URL.createObjectURL(base64ToBlob(result.data));
     const link = document.createElement('a');
     link.href = url;
-    // link.setAttribute('download', 'downloaded_file.pdf'); // 다운로드할 파일명 지정
+    link.setAttribute('download', 'downloaded_file.pdf'); // 다운로드할 파일명 지정
     link.target = '_blank';  // 새 창 또는 탭에서 링크를 열기 위해 target='_blank'를 설정
     document.body.appendChild(link);
     link.click();
@@ -181,15 +181,18 @@ const clickExcelDownload = async () => {
 
     const result = await $fetch('/api/common/excel', {
       method: 'GET',
+      // filepath지정 시 서버에 파일 저장됨
       params: {
         url: 'http://localhost:3000/test',
+        selector: '#__nuxt',
+        // filepath: 'test.xlsx'
       },
     });
 
-    const url = window.URL.createObjectURL(base64ToBlob(result, 'vnd.openxmlformats-officedocument.spreadsheetml.sheet'));
+    const url = window.URL.createObjectURL(base64ToBlob(result.data, 'vnd.openxmlformats-officedocument.spreadsheetml.sheet'));
     const link = document.createElement('a');
     link.href = url;
-    // link.setAttribute('download', 'downloaded_file.pdf'); // 다운로드할 파일명 지정
+    link.setAttribute('download', 'downloaded_file.xlsx'); // 다운로드할 파일명 지정
     link.target = '_blank';  // 새 창 또는 탭에서 링크를 열기 위해 target='_blank'를 설정
     document.body.appendChild(link);
     link.click();
