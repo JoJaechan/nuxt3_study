@@ -4,7 +4,7 @@ const path = require("path");
 dotenv.config({path: path.resolve('.env')});
 const paypalService = require('@services/paypal');
 const wooribankService = require('@services/wooribank');
-const pdfService = require('@services/pdf');
+const puppeteer = require('@services/puppeteer');
 const cipher = require('@utils/cipher');
 
 module.exports.createPayouts = async function (req, res) {
@@ -118,10 +118,11 @@ module.exports.executeWooriAcctToOtherAcct = async function (req, res) {
 // PDF 생성
 module.exports.getPDF = async function (req, res) {
     try {
-        const pdf = await pdfService.generatePDF(req, res);
+        const pdf = await puppeteer.generatePDF(req, res);
 
-        res.contentType('application/pdf');
-        res.send(pdf);
+        //res.contentType('application/pdf');
+        //res.send(pdf);
+        res.json(pdf);
     } catch (error) {
         console.error('Error during PDF generation:', error);
         res.status(500).send('Error processing PDF generation: ' + error.message);

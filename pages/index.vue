@@ -143,14 +143,12 @@ const clickpdfDownload = async () => {
       method: 'GET',
       // 원하는 url을 parameter로 전달
       params: {
-        url: 'http://localhost:3000'
+        url: 'https://dsec.mvpick.net/',
+        //path: 'test.pdf'
       },
-      responseType: 'blob'  // 서버로부터 blob 형태로 PDF 데이터를 받음
     });
 
-    console.log('PDF result:', result);
-
-    const url = window.URL.createObjectURL(result);
+    const url = window.URL.createObjectURL(base64ToBlob(result));
     const link = document.createElement('a');
     link.href = url;
     // link.setAttribute('download', 'downloaded_file.pdf'); // 다운로드할 파일명 지정
@@ -168,6 +166,17 @@ const clickpdfDownload = async () => {
   } finally {
     loading.value = false;
   }
+}
+
+const base64ToBlob = (base64) => {
+  const data = atob(base64);
+  // Blob 객체 생성
+  const byteNumbers = new Array(data.length);
+  for (let i = 0; i < data.length; i++) {
+    byteNumbers[i] = data.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  return new Blob([byteArray], { type: 'application/pdf' });
 }
 
 const clickuserLogin = async () => {
