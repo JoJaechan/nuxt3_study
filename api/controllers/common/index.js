@@ -129,6 +129,20 @@ module.exports.getPDF = async function (req, res) {
     }
 }
 
+// 엑셀 생성
+module.exports.getExcel = async function (req, res) {
+    try {
+        const xlsx = await puppeteer.generateExcel(req, res);
+
+        //res.contentType('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        //res.send(xlsx);
+        res.json(xlsx);
+    } catch (error) {
+        console.error('Error during Excel generation:', error);
+        res.status(500).send('Error processing Excel generation: ' + error.message);
+    }
+}
+
 // 로그인
 module.exports.signIn = async function (req, res) {
     try {

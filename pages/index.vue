@@ -1,7 +1,14 @@
 <template>
-  <button @click="clickpdfDownload">PDF Download</button>
+  <div>
+  <button @click="clickPdfDownload">PDF Download</button>
+  <button @click="clickExcelDownload">EXCEL Download</button>
+  </div>
+
+  <div>
   <button @click="clickuserLogin">LOGIN</button>
   <button @click="clickgetUserInfo">GET USER INFO</button>
+  </div>
+
   <ProgressSpinner v-if="loading" mode="indeterminate" style="background-color: gray; color: #007ad9;" />
   <main>
 
@@ -135,13 +142,13 @@ const clickBatchDetail = async () => {
   }
 };
 
-const clickpdfDownload = async () => {
+const clickPdfDownload = async () => {
   try {
     loading.value = true;
 
     const result = await $fetch('/api/common/pdf', {
       method: 'GET',
-      // 원하는 url을 parameter로 전달
+      // 원하는 url을 parameter로 전달, path전달시에는 백엔드 서버에 저장됨
       params: {
         url: 'https://dsec.mvpick.net/',
         //path: 'test.pdf'
@@ -168,7 +175,36 @@ const clickpdfDownload = async () => {
   }
 }
 
-const base64ToBlob = (base64) => {
+const clickExcelDownload = async () => {
+  try {
+    loading.value = true;
+
+    const result = await $fetch('/api/common/excel', {
+      method: 'GET',
+      params: {
+        url: 'http://localhost:3000/test',
+      },
+    });
+
+    const url = window.URL.createObjectURL(base64ToBlob(result, 'vnd.openxmlformats-officedocument.spreadsheetml.sheet'));
+    const link = document.createElement('a');
+    link.href = url;
+    // link.setAttribute('download', 'downloaded_file.pdf'); // 다운로드할 파일명 지정
+    link.target = '_blank';  // 새 창 또는 탭에서 링크를 열기 위해 target='_blank'를 설정
+    document.body.appendChild(link);
+    link.click();
+
+    // 다운로드 후 링크 제거
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url); // 생성된 URL을 메모리에서 제거
+  } catch (e) {
+    console.error('Error during generatePdf:', e);
+  } finally {
+    loading.value = false;
+  }
+}
+
+const base64ToBlob = (base64, fileType = 'pdf') => {
   const data = atob(base64);
   // Blob 객체 생성
   const byteNumbers = new Array(data.length);
@@ -176,7 +212,7 @@ const base64ToBlob = (base64) => {
     byteNumbers[i] = data.charCodeAt(i);
   }
   const byteArray = new Uint8Array(byteNumbers);
-  return new Blob([byteArray], { type: 'application/pdf' });
+  return new Blob([byteArray], { type: `application/${fileType}` });
 }
 
 const clickuserLogin = async () => {

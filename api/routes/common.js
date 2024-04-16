@@ -15,6 +15,7 @@ router.get('/woori/transfer/other', controllers.getWooriAcctToOtherAcct); // 타
 router.post('/woori/transfer/other', controllers.executeWooriAcctToOtherAcct); // 타행간 이제실행
 
 router.get('/pdf', controllers.getPDF); // PDF 생성
+router.get('/excel', controllers.getExcel); // Excel 생성
 router.post('/sign/in', controllers.signIn); // 로그인
 
 module.exports = router;
