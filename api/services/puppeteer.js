@@ -2,13 +2,16 @@ const puppeteer = require('puppeteer');
 const ExcelJS = require('exceljs');
 const path = require('path');
 
+async function setupPuppeteer() {
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    return { browser, page };
+}
+
 async function generatePDF(req) {
+    const { browser, page } = await setupPuppeteer();
     try {
-        const browser = await puppeteer.launch();
-        const page = await browser.newPage();
-
         const { url, filepath } = req.query;
-
         await page.goto(url, { waitUntil: 'networkidle2' });
 
         const pdfBuffer = await page.pdf({
@@ -19,18 +22,18 @@ async function generatePDF(req) {
 
         await browser.close();
 
-        return { data: pdfBuffer.toString('base64'), path };
+        return { data: pdfBuffer.toString('base64'), filepath };
     } catch (error) {
         console.error('Error during generatePDF transaction:', error);
         throw new Error('Error processing generatePDF Transaction: ' + error.message);
+    }  finally {
+        await browser.close();
     }
 }
 
 async function generateExcel(req) {
+    const { browser, page } = await setupPuppeteer();
     try {
-        const browser = await puppeteer.launch();
-        const page = await browser.newPage();
-
         const { url, selector, filepath } = req.query;
 
         await page.goto(url, { waitUntil: 'networkidle2' });
@@ -69,12 +72,12 @@ async function generateExcel(req) {
         const buffer = await workbook.xlsx.writeBuffer();
         const base64 = buffer.toString('base64');
 
-        await browser.close();
-
         return { data: base64, filepath };
     } catch (error) {
         console.error('Error during generateExcel transaction:', error);
         throw new Error('Error processing generateExcel Transaction: ' + error.message);
+    } finally {
+        await browser.close();
     }
 }
 
